@@ -40,8 +40,15 @@ func main() {
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	log.Println("Rendering " + tmpl)
-	t, _ := template.ParseFiles(tmpl + ".html")
-	t.Execute(w, p)
+	t, err := template.ParseFiles(tmpl + ".html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = t.Execute(w, p)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +78,10 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(body)
 	p := &Page{Title: title, Body: []byte(body)}
 	log.Println("Saving with body" + body)
-	p.save()
+	err := p.save()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
